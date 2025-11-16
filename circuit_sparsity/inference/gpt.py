@@ -907,13 +907,6 @@ def load_model(model_path, flash=False, grad_checkpointing=False, cuda=True):
     beeg_config_json = json.loads(
         read_file_cached(f"{model_path}/beeg_config.json").decode()
     )
-    beeg_config_json.pop("bigram_table_rank", None)  # dan-test
-    beeg_config_json.pop("pfrac", None)  # dan-test
-    beeg_config_json.pop("expansion_factor", None)
-    beeg_config_json.pop("expansion_factor_mlp", None)
-    beeg_config_json.pop("debug_exact_topk", None)
-    beeg_config_json.pop("sparse_matmul_impl", None)
-    beeg_config_json.pop("n_embd", None)
     if "n_mlp" in beeg_config_json:
         beeg_config_json["d_mlp"] = beeg_config_json.pop("n_mlp")
     beeg_config_json["flash"] = flash
