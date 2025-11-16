@@ -8,18 +8,17 @@ https://github.com/huggingface/transformers/blob/main/src/transformers/models/gp
 """
 
 
-import inspect
+import io
 import json
 import math
-import os
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Literal
 
 import blobfile as bf
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from tiktoken.load import read_file_cached
 
 # has to be down here to avoid loading cuda too early
 from circuit_sparsity.inference.hook_utils import (
@@ -27,9 +26,7 @@ from circuit_sparsity.inference.hook_utils import (
     hook_save,
     torch_recompute_preserving_hook_context,
 )
-from circuit_sparsity.inference.kernels import (
-    sample_top_k,
-)
+from circuit_sparsity.inference.kernels import sample_top_k
 
 
 class AbsTopK(nn.Module):
@@ -517,6 +514,7 @@ class GPTConfig:
     d_pos_emb: int | None = None
     dropout_cat_pos_emb: bool = False
     sinusoidal_cat_pos_emb: bool = False
+    enable_sparse_kernels: bool = False
 
     flash: bool = True
     sink: bool = False
@@ -906,12 +904,13 @@ def list_join(xss: list[list]) -> list:
 
 
 def load_model(model_path, flash=False, grad_checkpointing=False, cuda=True):
-    with bf.BlobFile(bf.join(f"{model_path}", "beeg_config.json"), "rb") as f:
-        beeg_config_json = json.load(f)
-        if "n_mlp" in beeg_config_json:
-            beeg_config_json["d_mlp"] = beeg_config_json.pop("n_mlp")
-        beeg_config_json["flash"] = flash
-        beeg_config_json["grad_checkpointing"] = grad_checkpointing
+    beeg_config_json = json.loads(
+        read_file_cached(f"{model_path}/beeg_config.json").decode()
+    )
+    if "n_mlp" in beeg_config_json:
+        beeg_config_json["d_mlp"] = beeg_config_json.pop("n_mlp")
+    beeg_config_json["flash"] = flash
+    beeg_config_json["grad_checkpointing"] = grad_checkpointing
 
     if "use_tied_aux_matrix" in beeg_config_json:
         assert not beeg_config_json.pop("use_tied_aux_matrix")
@@ -921,11 +920,15 @@ def load_model(model_path, flash=False, grad_checkpointing=False, cuda=True):
 
     model = GPT(config)
     # model.bake_tied_aux_matrix_()
-    with bf.BlobFile(ckpt_path, "rb") as f:
-        sd = torch.load(f, map_location="cpu")
-        if "final_logits_bias" not in sd:
-            sd["final_logits_bias"] = torch.zeros(config.vocab_size)
-        model.load_state_dict(sd, strict=False)
+    map_location = "cuda" if cuda else "cpu"
+    sd = torch.load(
+        io.BytesIO(read_file_cached(ckpt_path)),
+        weights_only=True,
+        map_location=map_location,
+    )
+    if "final_logits_bias" not in sd:
+        sd["final_logits_bias"] = torch.zeros(config.vocab_size)
+    model.load_state_dict(sd, strict=False)
 
     if cuda:
         model.cuda()

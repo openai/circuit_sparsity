@@ -8,10 +8,9 @@ import tiktoken
 import torch
 import torch.nn.functional as F
 from idemlib import CacheHelper
-import blobfile as bf
+from tiktoken.load import read_file_cached
 
-
-MODEL_BASE_DIR = "az://openaipublic/circuit-sparsity"
+MODEL_BASE_DIR = "https://openaipublic.blob.core.windows.net/circuit-sparsity"
 
 
 @dataclass
@@ -23,6 +22,9 @@ class Datapoint:
 
     target_tokid: int | None = None
     target_alt_tokid: int | None = None
+    # def __post_init__(self):
+    #     assert self.inputs.shape[0] == 1
+    #     assert len(self.inputs.shape) == 2
 
 
 def last_token_contrast_loss_fn(
@@ -85,34 +87,11 @@ def last_token_contrast_loss_fn(
     return loss
 
 
-def get_model_path(model_name):
-    if model_name == "achyuta-yolo-d12-multik":
-        return os.path.expanduser(
-            f"{MODEL_BASE_DIR}/models/achyuta-csp-achyuta_multik_yolo_exp-_newtok_12L_btableb_spembed_spunembed_dhead8c_xent_multiK_16B_nwise_annealing__lr1.28e-2_4x_pfrac6.25e-2"
-        )
-    else:
-        raise ValueError(f"model_name not found: {model_name}")
-
-
-@dataclass
-class Datapoint:
-    inputs: torch.Tensor
-    patch_from_inputs: torch.Tensor | None = None
-    # for scrubbing (deprecated)
-    pretrain_inputs: torch.Tensor | None = None
-
-    target_tokid: int | None = None
-    target_alt_tokid: int | None = None
-    # def __post_init__(self):
-    #     assert self.inputs.shape[0] == 1
-    #     assert len(self.inputs.shape) == 2
-
-
 @dataclass
 class Task:
     xs: list[Datapoint]
     xs_test: list[Datapoint]
-    loss_fn: callable
+    loss_fn: Callable
     enc: tiktoken.Encoding
 
     def __post_init__(self):
@@ -185,8 +164,8 @@ def keymap(fs: dict[str, Callable], d: dict) -> dict:
 def load_jsonls(paths):
     ret = []
     for path in paths:
-        with bf.BlobFile(path, "rb") as f:
-            ret.extend([json.loads(x) for x in f.readlines()])
+        b = read_file_cached(path)
+        ret.extend([json.loads(x) for x in b.decode().splitlines()])
 
     return ret
 

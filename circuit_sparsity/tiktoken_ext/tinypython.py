@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 from tiktoken.load import data_gym_to_mergeable_bpe_ranks
+
 from circuit_sparsity.registries import MODEL_BASE_DIR
 
 # Minimal set of special tokens referenced by this encoding.
@@ -13,10 +14,12 @@ def _paths_from_env_or_default() -> tuple[str, str]:
     """Resolve encoder.json and vocab.bpe locations.
 
     If TINYPYTHON_TOK_DIR is set, use that local directory.
-    Otherwise fall back to the original az:// blobstore locations.
+    Otherwise fall back to the original blob storage locations.
     """
 
-    local_dir = os.environ.get("TINYPYTHON_TOK_DIR") or os.path.expanduser(f"{MODEL_BASE_DIR}/tinypython")
+    local_dir = os.environ.get("TINYPYTHON_TOK_DIR") or os.path.expanduser(
+        os.path.join(MODEL_BASE_DIR, "tinypython")
+    )
     vocab_bpe = os.path.join(local_dir, "vocab.bpe")
     encoder_json = os.path.join(local_dir, "encoder.json")
     return vocab_bpe, encoder_json
@@ -26,7 +29,7 @@ def tinypython_2k():
     """Return a tiktoken encoding spec for the tinypython_2k BPE.
 
     This mirrors the definition used internally, but is kept minimal and
-    self-contained. It requires `blobfile` if reading from az:// URLs.
+    self-contained. It requires `blobfile` if reading from blob storage URLs.
     To force local files, set TINYPYTHON_TOK_DIR to a directory containing
     encoder.json and vocab.bpe.
     """

@@ -21,6 +21,7 @@ dependencies = [
   "matplotlib",
   "natsort",
   "plotly",
+  "pytest",
   "seaborn",
   "streamlit",
   "streamlit-plotly-events",

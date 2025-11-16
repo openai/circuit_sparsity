@@ -60,7 +60,7 @@ pytest tests/test_gpt.py
 
 ## Data Layout
 
-Project assets live under `az://openaipublic/circuit-sparsity` with the following structure:
+Project assets live under `https://openaipublic.blob.core.windows.net/circuit-sparsity` with the following structure:
 
 - `models/<model_id>/`
   - `beeg_config.json`: serialized `GPTConfig` used to rebuild the model.

@@ -1,6 +1,7 @@
 import concurrent.futures
 import functools
 import importlib
+import io
 import json
 import os
 import sys
@@ -10,7 +11,6 @@ from collections import defaultdict
 from itertools import islice
 
 import blobfile as bf
-import circuit_sparsity.registries
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,16 +19,17 @@ import plotly.graph_objects as go
 import seaborn as sns
 import streamlit as st
 import torch
-from circuit_sparsity.inference.gpt import GPTConfig
-from circuit_sparsity.single_tensor_pt_load_slice import read_tensor_slice_from_file
 from idemlib import CacheHelper
 from natsort import natsorted
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 from streamlit_plotly_events import plotly_events
 from tiktoken import get_encoding
+from tiktoken.load import read_file_cached
 
+import circuit_sparsity.registries
+from circuit_sparsity.inference.gpt import GPTConfig
 from circuit_sparsity.registries import MODEL_BASE_DIR
-
+from circuit_sparsity.single_tensor_pt_load_slice import read_tensor_slice_from_file
 
 BLUE = torch.tensor([0, 0, 255])  # base RGB for nodes / edges
 SAMPLES_SHOW = 5
@@ -225,8 +226,11 @@ def load_data(
 ):
     """Load the big blobs just once (cached)."""
     assert viz_data_path.endswith(".pt")
-    with bf.BlobFile(viz_data_path, "rb") as f:
-        viz_data = torch.load(f, weights_only=False, map_location="cpu")
+    viz_data = torch.load(
+        io.BytesIO(read_file_cached(viz_data_path)),
+        weights_only=True,
+        map_location="cpu",
+    )
     
     def _load_config(config_class, config_dict):
         import inspect
@@ -1597,25 +1601,23 @@ def get_embed_weights(model_path):
 
 def get_model_weights(model_path, fn=None):
     if fn is not None:
-        with bf.BlobFile(model_path + "/final_model.pt", "rb") as f:
-            return read_tensor_slice_from_file(f, fn, ())
+        return read_tensor_slice_from_file(
+            io.BytesIO(read_file_cached(bf.join(model_path, "final_model.pt"))), fn, ()
+        )
 
-    with bf.BlobFile(model_path + "/final_model.pt", "rb") as f:
-        model = torch.load(f, map_location="cpu")
-
+    model = torch.load(
+        io.BytesIO(read_file_cached(bf.join(model_path, "final_model.pt"))),
+        map_location="cpu",
+    )
     return model
 
 
 def get_model_path(model_name):
-    return os.path.expanduser(
-        f"{MODEL_BASE_DIR}/models/{model_name}"
-    )
+    return f"{MODEL_BASE_DIR}/models/{model_name}"
 
 
 def get_train_curves_path(model_name):
-    return os.path.expanduser(
-        f"{MODEL_BASE_DIR}/train_curves/{model_name}"
-    )
+    return f"{MODEL_BASE_DIR}/train_curves/{model_name}"
 
 
 def get_progress_data3(model_name):
@@ -1624,8 +1626,8 @@ def get_progress_data3(model_name):
     if logpath is None:
         return []
     try:
-        with bf.BlobFile(os.path.join(logpath, "progress.json")) as fh:
-            progress = [json.loads(x) for x in fh.readlines()]
+        b = read_file_cached(bf.join(logpath, "progress.json"))
+        progress = [json.loads(x) for x in b.decode().splitlines()]
     except FileNotFoundError:
         return []
 

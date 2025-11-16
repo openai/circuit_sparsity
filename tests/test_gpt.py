@@ -1,13 +1,9 @@
-from pathlib import Path
 
+import blobfile as bf
 import pytest
 import torch
 
-MODEL_SUBDIR = (
-    "achyuta-csp-achyuta_multik_yolo_exp-_newtok_12L_btableb_"
-    "spembed_spunembed_dhead8c_xent_multiK_16B_nwise_annealing__"
-    "lr1.28e-2_4x_pfrac6.25e-2"
-)
+MODEL_SUBDIR = "csp_yolo1"
 
 
 def test_gpt_forward_pass(monkeypatch):
@@ -45,17 +41,11 @@ def test_pretrained_gpt_forward_pass(monkeypatch):
     monkeypatch.setenv("NO_COMMS", "1")
 
     from circuit_sparsity.inference.gpt import load_model
+    from circuit_sparsity.registries import MODEL_BASE_DIR
 
-    model_dir = (
-        Path(__file__).resolve().parent.parent.parent  # repo root
-        / "data"
-        / "models"
-        / MODEL_SUBDIR
-    )
+    model_dir = bf.join(MODEL_BASE_DIR, "models", MODEL_SUBDIR)
 
-    assert (model_dir / "final_model.pt").is_file()
-
-    model = load_model(str(model_dir), cuda=False)
+    model = load_model(model_dir, cuda=False)
 
     batch_size = 1
     seq_len = 8
