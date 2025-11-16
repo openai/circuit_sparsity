@@ -1,6 +1,6 @@
 # Circuit Sparsity Visualizer and Models
 
-Tools for inspecting sparse circuit models from Gao et al. 2025. Provides code 
+Tools for inspecting sparse circuit models from [Gao et al. 2025](https://openai.com/index/understanding-neural-networks-through-sparse-circuits/). Provides code 
 for running inference as well as a Streamlit dashboard that allows you to interact
 with task-specific circuits found by pruning.
 
