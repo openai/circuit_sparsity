@@ -1485,13 +1485,8 @@ def main():
         cols = st.columns([1, 1])
         model_config = viz_data["importances"]["beeg_model_config"]
         with cols[0]:
-            cols2 = st.columns([1, 2, 1])
+            cols2 = st.columns([2, 1])
             with cols2[0]:
-                use_pca = st.toggle(
-                    "PCA components",
-                    value=False,
-                )
-            with cols2[1]:
                 chidx = st.selectbox(
                     "res channel index",
                     options=[
@@ -1502,14 +1497,10 @@ def main():
                 )
                 chidx = int(chidx.split(" ")[0])
 
-            with cols2[2]:
+            with cols2[1]:
                 st.text(f"encname: {model_config.tokenizer_name}")
 
-            if use_pca:
-                U, S, V = get_embed_weights_pca(model_path, q=100)
-                embsort = U[:, chidx].cpu().sort(descending=True)
-            else:
-                embsort = embed_weight[:, chidx].sort(descending=True)
+            embsort = embed_weight[:, chidx].sort(descending=True)
 
             def _filter_embsort(xs):
                 return [
@@ -1586,12 +1577,6 @@ def main():
 
     trace_mon_kill()
     status_placeholder.html("<pre>ready<br>&nbsp;</pre>")
-
-
-@cache("get_embed_weights_pca_v1")
-def get_embed_weights_pca(model_path, q):
-    wte = get_embed_weights(model_path).float()
-    return torch.pca_lowrank(wte, niter=10, q=q)
 
 
 @cache("get_embed_weights_v1")
@@ -1714,5 +1699,3 @@ if __name__ == "__main__":
     st.set_page_config(page_title="Circuit viz", layout="wide")
 
     main()
-
-
