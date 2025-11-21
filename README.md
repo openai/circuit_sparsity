@@ -2,7 +2,7 @@
 
 Tools for inspecting sparse circuit models from [Gao et al. 2025](https://openai.com/index/understanding-neural-networks-through-sparse-circuits/). Provides code 
 for running inference as well as a Streamlit dashboard that allows you to interact
-with task-specific circuits found by pruning.
+with task-specific circuits found by pruning. Note: this README was AI-generated and lightly edited.
 
 ## Installation
 
@@ -22,6 +22,10 @@ The app loads data from the openaipublic webpage and caches locally. When the
 visualizer loads you can choose a model, dataset, pruning sweep, and node budget `k`
 using the controls in the left column. The plots are rendered with Plotly; most
 elements are interactive and support hover/click exploration.
+
+Example view of the Streamlit circuit visualizer (wte/wpe tab) with node ablation deltas and activation previews:
+
+![Streamlit circuit visualizer](annotated-circuit-sparsity-viz.png)
 
 ## Running Model Forward Passes
 
