@@ -911,7 +911,7 @@ def load_model(model_path, flash=False, grad_checkpointing=False, cuda=True):
         beeg_config_json["d_mlp"] = beeg_config_json.pop("n_mlp")
     beeg_config_json["flash"] = flash
     if "sink" not in beeg_config_json:
-         beeg_config_json["sink"] = False
+        beeg_config_json["sink"] = False
     assert not (beeg_config_json["sink"] and not flash), "WARNING: attention sink is only supported with flash=True, this will silently break the model"
     beeg_config_json["grad_checkpointing"] = grad_checkpointing
 
