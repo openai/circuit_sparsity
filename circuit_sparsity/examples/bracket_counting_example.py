@@ -1,5 +1,6 @@
 """
 Reproduce bracket-counting mismatch on csp_yolo2: model predicts ']' instead of ']]' on the first viz sample.
+(h/t @neelsomani)
 Run from repo root:
   python circuit_sparsity/examples/bracket_counting_example.py
 """
