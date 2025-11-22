@@ -912,6 +912,16 @@ def load_model(model_path, flash=False, grad_checkpointing=False, cuda=True):
     beeg_config_json["flash"] = flash
     if "sink" not in beeg_config_json:
          beeg_config_json["sink"] = False
+    beeg_config_json.pop("afrac_approx", None)  # dan-test
+    beeg_config_json.pop("ignore_dw_grad", None)  # dan-test
+    beeg_config_json.pop("bigram_table_rank", None)  # dan-test
+    beeg_config_json.pop("pfrac", None)  # dan-test
+    beeg_config_json.pop("expansion_factor", None)  # dan-test
+    beeg_config_json.pop("expansion_factor_mlp", None)  # dan-test
+    beeg_config_json.pop("debug_exact_topk", None)  # dan-test
+    beeg_config_json.pop("sparse_matmul_impl", None)  # dan-test
+    beeg_config_json.pop("rtopk", None)  # dan-test
+    beeg_config_json.pop("n_embd", None)  # dan-test
     assert not (beeg_config_json["sink"] and not flash), "WARNING: attention sink is only supported with flash=True, this will silently break the model"
     beeg_config_json["grad_checkpointing"] = grad_checkpointing
 
