@@ -20,7 +20,7 @@ from circuit_sparsity.tiktoken_ext import tinypython
 
 
 def _truncate_zeros(sample: torch.Tensor) -> torch.Tensor:
-    # remove trailing zeros
+    # remove trailing zeros (used as padding tokens)
     assert sample.ndim == 1
     non_zero_indices = sample.nonzero()
     if non_zero_indices.numel() == 0:
