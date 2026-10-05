@@ -97,6 +97,9 @@ class HookContext:
             self.curcontext[self.curname + name] = tensor
 
         if self.curcontext is not None and self.save_grads and tensor.requires_grad:
+            # Backward may run after the namespace or recording scope has ended.
+            recording = self.curcontext
+            gradient_name = self.curname + name + ".grad"
 
             class _Grad(torch.autograd.Function):
                 @staticmethod
@@ -105,10 +108,10 @@ class HookContext:
 
                 @staticmethod
                 def backward(ctx, grad_output):
-                    self.curcontext[self.curname + name + ".grad"] = grad_output
+                    recording[gradient_name] = grad_output
                     return grad_output
 
-            if self.curregex.match(self.curname + name + ".grad"):
+            if self.curregex.match(gradient_name):
                 tensor = _Grad.apply(tensor)
 
         return tensor
