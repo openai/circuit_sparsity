@@ -28,7 +28,9 @@ def dense_to_sparse_topk(x, k, scores=None, abs: bool = True, exact: bool = Fals
     if scores is None:
         scores = x.detach()
     assert scores.shape == x.shape
-    vals, inds = topk(scores, k, abs=abs, exact=exact)
+    _, inds = topk(scores, k, abs=abs, exact=exact)
+    # Scores select positions; values and their gradients come from the input.
+    vals = x.reshape(-1)[inds]
 
     ret = torch.sparse_coo_tensor(
         torch.stack([inds // x.shape[1], inds % x.shape[1]], dim=0), vals, x.shape
