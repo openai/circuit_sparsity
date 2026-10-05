@@ -138,6 +138,7 @@ def torch_recompute_preserving_hook_context(f, *xs, use_reentrant=None):
         dict(oldcontext.curinterventions) if oldcontext.curinterventions is not None else None
     )
     curcontext.save_grads = oldcontext.save_grads
+    curcontext.curintervtransformer = oldcontext.curintervtransformer
 
     is_recompute = False
 
